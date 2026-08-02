@@ -6,6 +6,8 @@ Configure and maintain model dependencies for Transformers.js applications.
 manifest, validates that manifest at runtime, and provides convenient model
 lookup for applications that use one or more Hugging Face models.
 
+This is a community-maintained project and is not affiliated with Hugging Face.
+
 ## Install
 
 ```sh

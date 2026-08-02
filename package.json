@@ -1,10 +1,10 @@
 {
   "name": "hug-models",
   "version": "0.1.0",
-  "description": "Configure and maintain model dependencies for Transformers.js applications.",
+  "description": "Model dependency manifests and update checks for Transformers.js applications.",
   "type": "module",
   "bin": {
-    "hug-models": "./src/cli.js"
+    "hug-models": "src/cli.js"
   },
   "exports": {
     ".": {
@@ -27,7 +27,18 @@
   "keywords": [
     "transformers.js",
     "huggingface",
-    "models"
+    "models",
+    "model-management",
+    "dependency-management",
+    "cli"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erkde/hug-models.git"
+  },
+  "bugs": {
+    "url": "https://github.com/erkde/hug-models/issues"
+  },
+  "homepage": "https://github.com/erkde/hug-models#readme",
   "license": "MIT"
 }
