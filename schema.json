@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/hug-models/schema.json",
+  "title": "hug-models manifest",
+  "description": "Model dependencies used by a Transformers.js application.",
+  "type": "object",
+  "required": ["models"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "model": {
+      "type": "object",
+      "required": ["id", "revision"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional application-defined name used for lookup."
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The Hugging Face model repository ID."
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Pinned Hub commit used by the application."
+        },
+        "track": {
+          "type": "string",
+          "minLength": 1,
+          "default": "main",
+          "description": "Hub branch or tag checked for newer revisions."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

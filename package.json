@@ -1,0 +1,27 @@
+{
+  "name": "hug-models",
+  "version": "0.1.0",
+  "description": "Configure and maintain model dependencies for Transformers.js applications.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./schema.json": "./schema.json"
+  },
+  "files": [
+    "src",
+    "schema.json",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "transformers.js",
+    "huggingface",
+    "models"
+  ],
+  "license": "MIT"
+}
