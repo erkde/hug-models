@@ -60,9 +60,10 @@ and exits with status `0` when every pin is current. Otherwise it prints a table
 with abbreviated current and latest commits, tracked branch or tag, status, and
 the age of the latest commit on that branch or tag, then exits with status `1`.
 
-In an interactive terminal, ages under 30 days are green, ages from 30 through
-89 days are amber, and ages of 90 days or more are red. Set `NO_COLOR` to disable
-color or `FORCE_COLOR=1` to enable it when output is not connected to a terminal.
+In an interactive terminal, model values use the same semantic palette as
+`info`. Ages under 30 days are green, ages from 30 through 89 days are amber,
+and ages of 90 days or more are red. Set `NO_COLOR` to disable color or
+`FORCE_COLOR=1` to enable it when output is not connected to a terminal.
 
 Use `--no-color` to explicitly disable color. For scripts, `--json` returns full
 commit hashes, the exact latest commit timestamp, and its numeric age in whole
@@ -88,6 +89,46 @@ npx hug-models outdated --json
 
 Set `HF_TOKEN` when checking a private or gated model that your account can
 access.
+
+## Inspect a model
+
+Use `info` to inspect one model before updating its pin. A manifest model can be
+selected by name:
+
+```sh
+npx hug-models info asr
+```
+
+For a manifest containing one model, the name can be omitted. A custom manifest
+can follow the model name:
+
+```sh
+npx hug-models info asr config/models.json
+```
+
+You can also inspect a Hugging Face model that is not in the manifest by using
+its repository ID. Direct model inspection tracks `main` unless `--track` is
+provided:
+
+```sh
+npx hug-models info onnx-community/moonshine-tiny-ONNX
+npx hug-models info onnx-community/moonshine-tiny-ONNX --track release
+```
+
+The human-readable output includes the full current and latest revisions, track,
+update status, exact and relative update time, task, library, license, tags, and
+access level when supplied by the Hub. Unlike `outdated`, `info` is
+informational and exits with status `0` even when the pin is outdated.
+Interactive output uses color to separate selected values from labels; age is
+colored only when a newer revision is available. The same `NO_COLOR`,
+`FORCE_COLOR`, and `--no-color` controls apply.
+
+Use `--json` for stable, uncolored output with full revisions, exact timestamps,
+and numeric age:
+
+```sh
+npx hug-models info asr --json
+```
 
 ## Load the configuration
 

@@ -112,6 +112,24 @@ test('colors age green below 30 days, amber below 90 days, and red thereafter', 
   assert.match(result(90), /\u001b\[31m3 months ago\u001b\[0m/);
 });
 
+test('color does not change table alignment', () => {
+  const models = [
+    {
+      id: 'org/stale',
+      revision: pinnedRevision,
+      track: 'main',
+      latestRevision,
+      latestAt: '2026-07-05T00:00:00.000Z',
+      outdated: true,
+    },
+  ];
+  const plain = formatOutdatedModels(models, { now });
+  const colored = formatOutdatedModels(models, { color: true, now });
+
+  assert.match(colored, /\u001b\[[\d;]*m/);
+  assert.equal(colored.replace(/\u001b\[[\d;]*m/g, ''), plain);
+});
+
 test('respects standard color environment controls', () => {
   assert.equal(shouldUseColor({ env: {}, isTTY: true }), true);
   assert.equal(shouldUseColor({ env: { NO_COLOR: '' }, isTTY: true }), false);
@@ -157,10 +175,11 @@ test('formats JSON with full revisions, exact timestamps, and numeric age', () =
   assert.doesNotMatch(output, /\u001b\[/);
 });
 
-test('CLI reads a manifest and exits with one for an outdated pin', async () => {
+test('CLI honors --no-color and exits with one for an outdated pin', async () => {
   let output = '';
-  const code = await runCli(['outdated'], {
+  const code = await runCli(['outdated', '--no-color'], {
     cwd: '/project',
+    color: true,
     readFileImpl: async (path) => {
       assert.equal(path, '/project/hug-models.json');
       return JSON.stringify({
@@ -182,6 +201,7 @@ test('CLI reads a manifest and exits with one for an outdated pin', async () => 
   assert.equal(code, 1);
   assert.match(output, /org\/model/);
   assert.match(output, /aaaaaaa\s+main\s+bbbbbbb\s+outdated/);
+  assert.doesNotMatch(output, /\u001b\[[\d;]*m/);
 });
 
 test('CLI is quiet and exits with zero when every pin is current', async () => {
