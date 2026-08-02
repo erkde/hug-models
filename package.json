@@ -1,6 +1,6 @@
 {
   "name": "hug-models",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Model dependency manifests and update checks for Transformers.js applications.",
   "type": "module",
   "bin": {
