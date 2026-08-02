@@ -38,6 +38,55 @@ The bundled JSON Schema provides editor completion and validates the manifest
 shape. Depending on your editor, you can also reference the package export as
 `hug-models/schema.json`.
 
+## Check for outdated pins
+
+Run the `outdated` command from the directory containing `hug-models.json`:
+
+```sh
+npx hug-models outdated
+```
+
+You can pass a different manifest path when needed:
+
+```sh
+npx hug-models outdated config/models.json
+```
+
+The command resolves each model's `track` on the Hugging Face Hub and compares
+its commit with the pinned `revision`. Like `npm outdated`, it prints nothing
+and exits with status `0` when every pin is current. Otherwise it prints a table
+with abbreviated current and latest commits, tracked branch or tag, status, and
+the age of the latest commit on that branch or tag, then exits with status `1`.
+
+In an interactive terminal, ages under 30 days are green, ages from 30 through
+89 days are amber, and ages of 90 days or more are red. Set `NO_COLOR` to disable
+color or `FORCE_COLOR=1` to enable it when output is not connected to a terminal.
+
+Use `--no-color` to explicitly disable color. For scripts, `--json` returns full
+commit hashes, the exact latest commit timestamp, and its numeric age in whole
+days. JSON output never includes terminal color codes:
+
+```sh
+npx hug-models outdated --json
+```
+
+```json
+[
+  {
+    "model": "onnx-community/moonshine-tiny-ONNX",
+    "current": "2e9aab599b84ee5aa2b305757e92c656d9ae638f",
+    "track": "main",
+    "latest": "a6da1241cd305dcd64eab1edbd615f2bb9aabb95",
+    "status": "outdated",
+    "latestAt": "2025-01-17T00:00:00.000Z",
+    "ageDays": 562
+  }
+]
+```
+
+Set `HF_TOKEN` when checking a private or gated model that your account can
+access.
+
 ## Load the configuration
 
 ```js

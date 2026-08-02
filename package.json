@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Configure and maintain model dependencies for Transformers.js applications.",
   "type": "module",
+  "bin": {
+    "hug-models": "./src/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
@@ -17,6 +20,9 @@
   ],
   "scripts": {
     "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [
     "transformers.js",
