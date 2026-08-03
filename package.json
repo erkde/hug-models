@@ -40,5 +40,8 @@
     "url": "https://github.com/erkde/hug-models/issues"
   },
   "homepage": "https://github.com/erkde/hug-models#readme",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^13.1.0"
+  }
 }

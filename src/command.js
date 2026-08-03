@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
+import { Command, CommanderError } from 'commander';
 import { createModelConfig } from './index.js';
 import {
   checkOutdatedModels,
@@ -8,19 +10,8 @@ import {
 } from './outdated.js';
 import { formatModelInfo, formatModelInfoJson, getModelInfo } from './info.js';
 
-export const help = `Usage:
-  hug-models outdated [manifest] [--json] [--no-color]
-  hug-models info [model] [manifest] [--track <branch-or-tag>] [--json] [--no-color]
-
-Commands:
-  outdated  Check pinned revisions against their tracked branches or tags.
-  info      Show update details and Hub metadata for one model.
-
-Options:
-  --json              Print stable JSON with full revisions and exact timestamps.
-  --no-color          Disable colors even when output is an interactive terminal.
-  --track <revision>  Inspect a branch or tag (info only; defaults to main).
-  -h, --help          Show help.`;
+const require = createRequire(import.meta.url);
+const { description, version } = require('../package.json');
 
 export function shouldUseColor({ env = process.env, isTTY = process.stdout.isTTY } = {}) {
   if (Object.hasOwn(env, 'NO_COLOR')) return false;
@@ -46,47 +37,86 @@ export async function runCli(
     now = Date.now(),
   } = {},
 ) {
-  if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-    write(help);
-    return 0;
+  let exitCode = 0;
+  const dependencies = { cwd, readFileImpl, fetchImpl, token, write, color, now };
+  const program = createProgram({
+    write,
+    setExitCode: (value) => {
+      exitCode = value;
+    },
+    dependencies,
+  });
+
+  try {
+    await program.parseAsync(args.length === 0 ? ['--help'] : args, { from: 'user' });
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      if (error.code === 'commander.helpDisplayed' || error.code === 'commander.version') {
+        return error.exitCode;
+      }
+      throw new Error(error.message.replace(/^error: /, ''), { cause: error });
+    }
+    throw error;
   }
 
-  if (args[0] !== 'outdated' && args[0] !== 'info') {
-    throw new Error(`Unknown command "${args[0]}".\n\n${help}`);
-  }
+  return exitCode;
+}
 
-  const command = args[0];
-  const commandArgs = command === 'outdated'
-    ? parseOutdatedArgs(args.slice(1))
-    : parseInfoArgs(args.slice(1));
-  if (commandArgs.help) {
-    write(help);
-    return 0;
-  }
+function createProgram({ write, setExitCode, dependencies }) {
+  const program = new Command()
+    .name('hug-models')
+    .description(description)
+    .version(version)
+    .showSuggestionAfterError()
+    .exitOverride()
+    .configureOutput({
+      writeOut: (value) => write(value.replace(/\n$/, '')),
+      writeErr: () => {},
+    });
 
-  if (command === 'info') {
-    const model = await resolveInfoModel(commandArgs, { cwd, readFileImpl });
-    const result = await getModelInfo(
-      {
-        ...model,
-        track: commandArgs.track ?? model.track,
-      },
-      { fetchImpl, token },
-    );
-    write(commandArgs.json
-      ? formatModelInfoJson(result, { now })
-      : formatModelInfo(result, { color: color && !commandArgs.noColor, now }));
-    return 0;
-  }
+  program
+    .command('outdated')
+    .description('Check pinned revisions against their tracked branches or tags.')
+    .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
+    .option('--json', 'print stable JSON with full revisions and exact timestamps')
+    .option('--no-color', 'disable colors even when output is an interactive terminal')
+    .action(async (manifest, options) => {
+      setExitCode(await runOutdated({ manifest, ...options }, dependencies));
+    });
 
-  const manifestPath = resolve(cwd, commandArgs.manifest ?? 'hug-models.json');
+  program
+    .command('info')
+    .description('Show update details and Hub metadata for one model.')
+    .argument('[model]', 'model name or Hugging Face model ID')
+    .argument('[manifest]', 'path to the model manifest')
+    .option('--track <branch-or-tag>', 'inspect a branch or tag')
+    .option('--json', 'print stable JSON with full revisions and exact timestamps')
+    .option('--no-color', 'disable colors even when output is an interactive terminal')
+    .action(async (model, manifest, options) => {
+      await runInfo({ model, manifest, ...options }, dependencies);
+      setExitCode(0);
+    });
+
+  return program;
+}
+
+async function runOutdated(commandArgs, {
+  cwd,
+  readFileImpl,
+  fetchImpl,
+  token,
+  write,
+  color,
+  now,
+}) {
+  const manifestPath = resolve(cwd, commandArgs.manifest);
   const config = await readModelConfig(manifestPath, readFileImpl);
   const results = await checkOutdatedModels(config.models, { fetchImpl, token });
   if (commandArgs.json) {
     write(formatOutdatedModelsJson(results, { now }));
   } else {
     const output = formatOutdatedModels(results, {
-      color: color && !commandArgs.noColor,
+      color: color && commandArgs.color !== false,
       now,
     });
     if (output) write(output);
@@ -94,66 +124,26 @@ export async function runCli(
   return results.some((model) => model.outdated) ? 1 : 0;
 }
 
-function parseOutdatedArgs(args) {
-  const options = { json: false, noColor: false, manifest: undefined };
-
-  for (const arg of args) {
-    if (arg === '--help' || arg === '-h') {
-      return { ...options, help: true };
-    }
-    if (arg === '--json') {
-      options.json = true;
-    } else if (arg === '--no-color') {
-      options.noColor = true;
-    } else if (arg.startsWith('-')) {
-      throw new Error(`Unknown option "${arg}".\n\n${help}`);
-    } else if (options.manifest === undefined) {
-      options.manifest = arg;
-    } else {
-      throw new Error(`The outdated command accepts at most one manifest path.\n\n${help}`);
-    }
-  }
-
-  return options;
-}
-
-function parseInfoArgs(args) {
-  const options = {
-    json: false,
-    noColor: false,
-    model: undefined,
-    manifest: undefined,
-    track: undefined,
-  };
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    if (arg === '--help' || arg === '-h') {
-      return { ...options, help: true };
-    }
-    if (arg === '--json') {
-      options.json = true;
-    } else if (arg === '--no-color') {
-      options.noColor = true;
-    } else if (arg === '--track') {
-      const track = args[index + 1];
-      if (track === undefined || track.startsWith('-')) {
-        throw new Error(`The --track option requires a branch or tag.\n\n${help}`);
-      }
-      options.track = track;
-      index += 1;
-    } else if (arg.startsWith('-')) {
-      throw new Error(`Unknown option "${arg}".\n\n${help}`);
-    } else if (options.model === undefined) {
-      options.model = arg;
-    } else if (options.manifest === undefined) {
-      options.manifest = arg;
-    } else {
-      throw new Error(`The info command accepts at most a model and manifest path.\n\n${help}`);
-    }
-  }
-
-  return options;
+async function runInfo(commandArgs, {
+  cwd,
+  readFileImpl,
+  fetchImpl,
+  token,
+  write,
+  color,
+  now,
+}) {
+  const model = await resolveInfoModel(commandArgs, { cwd, readFileImpl });
+  const result = await getModelInfo(
+    {
+      ...model,
+      track: commandArgs.track ?? model.track,
+    },
+    { fetchImpl, token },
+  );
+  write(commandArgs.json
+    ? formatModelInfoJson(result, { now })
+    : formatModelInfo(result, { color: color && commandArgs.color !== false, now }));
 }
 
 async function resolveInfoModel(commandArgs, { cwd, readFileImpl }) {
