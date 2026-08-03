@@ -204,6 +204,7 @@ test('rejects malformed security status and mismatched pinned revisions', async 
 test('CLI exits with zero for a completed clean audit', async () => {
   let output = '';
   const code = await runCli(['audit'], {
+    color: false,
     readFileImpl: async () => JSON.stringify({
       models: [{ id: 'org/model', revision: pinnedRevision }],
     }),
