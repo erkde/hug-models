@@ -1,4 +1,10 @@
-import { calculateAgeDays, colorAge, formatAge, styleText } from './format.js';
+import {
+  calculateAgeDays,
+  colorAge,
+  formatAge,
+  shortRevision,
+  styleText,
+} from './format.js';
 import { fetchHubModel, hubModelUrl } from './hub.js';
 
 const revisionFields = ['sha', 'lastModified'];
@@ -134,10 +140,6 @@ export function formatOutdatedModelsJson(results, { now = Date.now() } = {}) {
     null,
     2,
   );
-}
-
-function shortRevision(revision) {
-  return revision.slice(0, 7);
 }
 
 function formatCell(value, width, style) {

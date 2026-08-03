@@ -2,6 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { Command, CommanderError } from 'commander';
+import {
+  auditModels,
+  formatAuditResults,
+  formatAuditResultsJson,
+  hasAuditProblems,
+} from './audit.js';
 import { createModelConfig } from './index.js';
 import {
   checkOutdatedModels,
@@ -75,6 +81,16 @@ function createProgram({ write, setExitCode, dependencies }) {
     });
 
   program
+    .command('audit')
+    .description('Check pinned model revisions for Hub security findings.')
+    .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
+    .option('--json', 'print stable JSON with full revisions and security findings')
+    .option('--no-color', 'disable colors even when output is an interactive terminal')
+    .action(async (manifest, options) => {
+      setExitCode(await runAudit({ manifest, ...options }, dependencies));
+    });
+
+  program
     .command('outdated')
     .description('Check pinned revisions against their tracked branches or tags.')
     .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
@@ -98,6 +114,23 @@ function createProgram({ write, setExitCode, dependencies }) {
     });
 
   return program;
+}
+
+async function runAudit(commandArgs, {
+  cwd,
+  readFileImpl,
+  fetchImpl,
+  token,
+  write,
+  color,
+}) {
+  const manifestPath = resolve(cwd, commandArgs.manifest);
+  const config = await readModelConfig(manifestPath, readFileImpl);
+  const results = await auditModels(config.models, { fetchImpl, token });
+  write(commandArgs.json
+    ? formatAuditResultsJson(results)
+    : formatAuditResults(results, { color: color && commandArgs.color !== false }));
+  return hasAuditProblems(results) ? 1 : 0;
 }
 
 async function runOutdated(commandArgs, {

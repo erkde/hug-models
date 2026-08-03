@@ -12,6 +12,7 @@ test('CLI shows generated help when called without a command', async () => {
 
   assert.equal(code, 0);
   assert.match(output, /^Usage: hug-models \[options\] \[command\]/m);
+  assert.match(output, /^\s+audit \[options\] \[manifest\]/m);
   assert.match(output, /^\s+outdated \[options\] \[manifest\]/m);
   assert.match(output, /^\s+info \[options\] \[model\] \[manifest\]/m);
 });

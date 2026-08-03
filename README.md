@@ -1,10 +1,11 @@
 # hug-models
 
-Configure and maintain model dependencies for Transformers.js applications.
+Configure, maintain, and audit model dependencies for Transformers.js applications.
 
 `hug-models` keeps model repository IDs and pinned revisions in a small JSON
-manifest, validates that manifest at runtime, and provides convenient model
-lookup for applications that use one or more Hugging Face models.
+manifest, validates that manifest at runtime, checks pinned revisions for
+updates and Hub security findings, and provides convenient model lookup for
+applications that use one or more Hugging Face models.
 
 This is a community-maintained project and is not affiliated with Hugging Face.
 
@@ -88,6 +89,86 @@ npx hug-models outdated --json
 ```
 
 Set `HF_TOKEN` when checking a private or gated model that your account can
+access.
+
+## Audit pinned models
+
+Run `audit` to check every pinned revision against the Hugging Face Hub's
+repository security scan:
+
+```sh
+npx hug-models audit
+```
+
+You can pass a custom manifest path:
+
+```sh
+npx hug-models audit config/models.json
+```
+
+The audit always requests the exact `revision` used by the application rather
+than the moving branch or tag in `track`. When the Hub reports findings, the
+command prints a detailed section for each affected file, including its
+severity, full revision, and a direct Hub link:
+
+```text
+# hug-models audit report
+
+owner/model
+Severity: unsafe
+Revision: 753c3cb70db0705e814b400330028ad5335246d3
+File: pytorch_model.bin
+https://huggingface.co/owner/model/blob/753c3cb70db0705e814b400330028ad5335246d3/pytorch_model.bin
+
+1 security finding (1 unsafe)
+```
+
+The possible model statuses are:
+
+- `clean` — the Hub completed its scans and reported no affected files.
+- `caution` — at least one file requires review.
+- `unsafe` — at least one file was marked unsafe.
+- `unscanned` — the Hub did not report its scans as complete.
+
+When every model has a completed, clean scan, the command prints only
+`found 0 security issues`. It exits with status `0` in that case. Findings and
+incomplete scans exit with status `1`, making the command suitable for CI.
+Interactive output uses red for `unsafe` and amber for both `caution` and
+`unscanned`; the standard `NO_COLOR`, `FORCE_COLOR`, and `--no-color` controls
+apply.
+
+For scripts, `--json` returns every audited model with full revisions and file
+findings, without terminal color codes:
+
+```sh
+npx hug-models audit --json
+```
+
+```json
+[
+  {
+    "model": "owner/model",
+    "revision": "753c3cb70db0705e814b400330028ad5335246d3",
+    "scannedRevision": "753c3cb70db0705e814b400330028ad5335246d3",
+    "status": "unsafe",
+    "scansDone": true,
+    "issues": [
+      {
+        "path": "pytorch_model.bin",
+        "level": "unsafe"
+      }
+    ]
+  }
+]
+```
+
+This command reports the Hub's automated scan result; it is not an independent
+security review or a guarantee that a model is safe. In particular, findings
+can require manual investigation. See Hugging Face's documentation on
+[malware scanning](https://huggingface.co/docs/hub/en/security-malware) and
+[Pickle scanning](https://huggingface.co/docs/hub/en/security-pickle).
+
+Set `HF_TOKEN` when auditing a private or gated model that your account can
 access.
 
 ## Inspect a model

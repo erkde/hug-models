@@ -1,7 +1,7 @@
 {
   "name": "hug-models",
   "version": "0.2.0",
-  "description": "Model dependency manifests and update checks for Transformers.js applications.",
+  "description": "Model dependency manifests, outdated checks, and security audits for Transformers.js applications.",
   "type": "module",
   "bin": {
     "hug-models": "src/cli.js"
@@ -30,6 +30,7 @@
     "models",
     "model-management",
     "dependency-management",
+    "security",
     "cli"
   ],
   "repository": {
