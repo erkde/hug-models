@@ -99,7 +99,7 @@ test('formats a clean audit with an npm-style summary', () => {
   assert.equal(output, 'found 0 security issues');
 });
 
-test('formats findings and incomplete scans as a detailed report', () => {
+test('reports findings separately from the Hub scan-completion signal', () => {
   const output = formatAuditResults([
     {
       id: 'org/model',
@@ -134,13 +134,34 @@ test('formats findings and incomplete scans as a detailed report', () => {
   assert.match(output, /^Severity: caution$/m);
   assert.match(output, /^File: review\.pt$/m);
   assert.match(output, /^org\/pending$/m);
-  assert.match(output, /^Status: unscanned$/m);
-  assert.match(output, /The Hub did not report its security scans as complete\./);
+  assert.doesNotMatch(output, /unscanned/);
+  assert.match(output, /^Hub reports that not all scans are done\.$/m);
   assert.match(
     output,
     new RegExp(`^Details: https://huggingface\\.co/org/pending/tree/${secondRevision}$`, 'm'),
   );
-  assert.match(output, /2 security findings \(1 caution, 1 unsafe\), 1 unscanned model$/);
+  assert.match(
+    output,
+    /2 security findings \(1 caution, 1 unsafe\)\nHub reports that not all scans are done for 1 model$/,
+  );
+});
+
+test('reports zero findings when the Hub says scans are not all done', () => {
+  const output = formatAuditResults([{
+    id: 'org/model',
+    revision: pinnedRevision,
+    scannedRevision: pinnedRevision,
+    scansDone: false,
+    issues: [],
+    status: 'unscanned',
+  }]);
+
+  assert.match(output, /^Hub reports that not all scans are done\.$/m);
+  assert.match(
+    output,
+    /0 security findings\nHub reports that not all scans are done for 1 model$/,
+  );
+  assert.doesNotMatch(output, /unscanned/);
 });
 
 test('color does not change audit report content', () => {

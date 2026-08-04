@@ -101,19 +101,21 @@ Severity: unsafe
 1 security finding (1 unsafe)
 ```
 
-The possible model statuses are:
+The Hub report provides two independent signals:
 
-- `clean` — the Hub completed its scans and reported no affected files.
-- `caution` — at least one file requires review.
-- `unsafe` — at least one file was marked unsafe.
-- `unscanned` — the Hub did not report its scans as complete.
+- `filesWithIssues` lists files that require review or were marked unsafe.
+- `scansDone` says whether the Hub reports that all scans are done.
+
+When `scansDone` is false, the report says `Hub reports that not all scans are
+done`. This does not imply that no files were scanned, and it is reported
+separately from security findings.
 
 When every model has a completed, clean scan, the command prints only
 `found 0 security issues`. It exits with status `0` in that case. Findings and
 incomplete scans exit with status `1`, making the command suitable for CI.
-Interactive output uses red for `unsafe` and amber for both `caution` and
-`unscanned`; the standard `NO_COLOR`, `FORCE_COLOR`, and `--no-color` controls
-apply.
+Interactive output uses red for unsafe findings and amber for caution findings
+and the Hub's incomplete scan signal; the standard `NO_COLOR`, `FORCE_COLOR`,
+and `--no-color` controls apply.
 
 For scripts, `--json` returns every audited model with full revisions and file
 findings, without terminal color codes:

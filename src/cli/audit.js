@@ -89,8 +89,7 @@ export function formatAuditResults(results, { color = false } = {}) {
     if (!model.scansDone) {
       lines.push(
         '',
-        `Status: ${paint('unscanned', 'amber')}`,
-        paint('The Hub did not report its security scans as complete.', 'dim'),
+        paint('Hub reports that not all scans are done.', 'amber'),
       );
     }
     sections.push(lines.join('\n'));
@@ -191,9 +190,15 @@ function formatAuditSummary(results, paint) {
     parts.push(`${findings} (${severities.join(', ')})`);
   }
   if (unscanned > 0) {
-    parts.push(paint(`${unscanned} unscanned ${plural('model', unscanned)}`, 'amber'));
+    if (findingCount === 0) parts.push(paint('0 security findings', 'green'));
+    parts.push(
+      paint(
+        `Hub reports that not all scans are done for ${unscanned} ${plural('model', unscanned)}`,
+        'amber',
+      ),
+    );
   }
-  return parts.join(', ');
+  return parts.join('\n');
 }
 
 function modelRevisionUrl(model) {
