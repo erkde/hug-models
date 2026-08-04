@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runCli } from '../src/command.js';
+import { runCli } from '../../src/cli/command.js';
 import {
   formatModelInfo,
   formatModelInfoJson,
   getModelInfo,
   modelInfoUrl,
-} from '../src/info.js';
+} from '../../src/cli/info.js';
 
 const pinnedRevision = 'a'.repeat(40);
 const latestRevision = 'b'.repeat(40);

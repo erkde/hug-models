@@ -8,7 +8,7 @@ import {
   formatAuditResultsJson,
   hasAuditProblems,
 } from './audit.js';
-import { createModelConfig } from './index.js';
+import { createModelConfig } from '../index.js';
 import {
   checkOutdatedModels,
   formatOutdatedModels,
@@ -17,7 +17,7 @@ import {
 import { formatModelInfo, formatModelInfoJson, getModelInfo } from './info.js';
 
 const require = createRequire(import.meta.url);
-const { description, version } = require('../package.json');
+const { description, version } = require('../../package.json');
 
 export function shouldUseColor({ env = process.env, isTTY = process.stdout.isTTY } = {}) {
   if (Object.hasOwn(env, 'NO_COLOR')) return false;

@@ -4,7 +4,7 @@
   "description": "Model dependency manifests, outdated checks, and security audits for Transformers.js applications.",
   "type": "module",
   "bin": {
-    "hug-models": "src/cli.js"
+    "hug-models": "src/cli/index.js"
   },
   "exports": {
     ".": {
@@ -19,6 +19,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "lint:package": "publint",
     "test": "node --test"
   },
   "engines": {
@@ -44,5 +45,8 @@
   "license": "MIT",
   "dependencies": {
     "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "publint": "^0.3.22"
   }
 }

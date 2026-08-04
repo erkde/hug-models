@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runCli, shouldUseColor } from '../src/command.js';
+import { runCli, shouldUseColor } from '../../src/cli/command.js';
 import {
   calculateAgeDays,
   checkOutdatedModels,
@@ -8,7 +8,7 @@ import {
   formatOutdatedModels,
   formatOutdatedModelsJson,
   modelRevisionUrl,
-} from '../src/outdated.js';
+} from '../../src/cli/outdated.js';
 
 const pinnedRevision = 'a'.repeat(40);
 const latestRevision = 'b'.repeat(40);

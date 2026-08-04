@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import test from 'node:test';
-import { runCli } from '../src/command.js';
+import { runCli } from '../../src/cli/command.js';
 
 const require = createRequire(import.meta.url);
-const { version } = require('../package.json');
+const { version } = require('../../package.json');
 
 test('CLI shows generated help when called without a command', async () => {
   let output = '';

@@ -6,8 +6,8 @@ import {
   formatAuditResultsJson,
   hasAuditProblems,
   modelAuditUrl,
-} from '../src/audit.js';
-import { runCli } from '../src/command.js';
+} from '../../src/cli/audit.js';
+import { runCli } from '../../src/cli/command.js';
 
 const pinnedRevision = 'a'.repeat(40);
 const secondRevision = 'b'.repeat(40);
