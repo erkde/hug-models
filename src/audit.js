@@ -71,24 +71,29 @@ export function formatAuditResults(results, { color = false } = {}) {
 
   const sections = [];
   for (const model of results) {
+    if (model.issues.length === 0 && model.scansDone) continue;
+
+    const lines = [
+      paint(model.id, 'bold', 'cyan'),
+      `Revision: ${model.scannedRevision}`,
+      `Details: ${paint(modelRevisionUrl(model), 'blue', 'underline')}`,
+    ];
+
     for (const issue of model.issues) {
-      sections.push([
-        paint(model.id, 'bold', 'cyan'),
-        `Severity: ${paint(issue.level, issue.level === 'unsafe' ? 'red' : 'amber')}`,
-        `Revision: ${model.scannedRevision}`,
+      lines.push(
+        '',
         `File: ${paint(issue.path, 'cyan')}`,
-        paint(modelFileUrl(model, issue.path), 'blue', 'underline'),
-      ].join('\n'));
+        `Severity: ${paint(issue.level, issue.level === 'unsafe' ? 'red' : 'amber')}`,
+      );
     }
     if (!model.scansDone) {
-      sections.push([
-        paint(model.id, 'bold', 'cyan'),
+      lines.push(
+        '',
         `Status: ${paint('unscanned', 'amber')}`,
-        `Revision: ${model.scannedRevision}`,
         paint('The Hub did not report its security scans as complete.', 'dim'),
-        paint(modelRevisionUrl(model), 'blue', 'underline'),
-      ].join('\n'));
+      );
     }
+    sections.push(lines.join('\n'));
   }
 
   return [
@@ -189,10 +194,6 @@ function formatAuditSummary(results, paint) {
     parts.push(paint(`${unscanned} unscanned ${plural('model', unscanned)}`, 'amber'));
   }
   return parts.join(', ');
-}
-
-function modelFileUrl(model, path) {
-  return `https://huggingface.co/${encodePath(model.id)}/blob/${encodeURIComponent(model.scannedRevision)}/${encodePath(path)}`;
 }
 
 function modelRevisionUrl(model) {

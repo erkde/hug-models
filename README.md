@@ -1,21 +1,26 @@
 # hug-models
 
-Configure, maintain, and audit model dependencies for Transformers.js applications.
+Manage pinned Hugging Face model dependencies in Transformers.js applications.
 
-`hug-models` keeps model repository IDs and pinned revisions in a small JSON
-manifest, validates that manifest at runtime, checks pinned revisions for
-updates and Hub security findings, and provides convenient model lookup for
-applications that use one or more Hugging Face models.
+Store model repository IDs and immutable revisions in a small JSON manifest,
+load them from application code, and use the CLI to inspect updates and Hub
+security findings.
 
-This is a community-maintained project and is not affiliated with Hugging Face.
+| Command                   | What it does                                          |
+| ------------------------- | ----------------------------------------------------- |
+| `npx hug-models audit`    | Check pinned revisions for Hub security findings      |
+| `npx hug-models info`     | Inspect a model and retrieve its latest full revision |
+| `npx hug-models outdated` | Find pins with newer tracked revisions                |
 
-## Install
+This is an independent open-source project and is not affiliated with Hugging Face.
+
+## Quick start
+
+Install the package:
 
 ```sh
 npm install hug-models
 ```
-
-## Create a manifest
 
 Create a `hug-models.json` file in your application:
 
@@ -33,65 +38,37 @@ Create a `hug-models.json` file in your application:
 }
 ```
 
-The `revision` should be a pinned Hugging Face commit rather than a moving
-branch name. `track` records the branch or tag to check for newer revisions and
-defaults to `main` when omitted.
+Use the manifest in your application:
 
-The bundled JSON Schema provides editor completion and validates the manifest
-shape. Depending on your editor, you can also reference the package export as
-`hug-models/schema.json`.
+```js
+import { pipeline } from "@huggingface/transformers";
+import { createModelConfig } from "hug-models";
+import manifest from "./hug-models.json" with { type: "json" };
 
-## Check for outdated pins
+const models = createModelConfig(manifest);
+const asrModel = models.get("asr");
 
-Run the `outdated` command from the directory containing `hug-models.json`:
+const transcriber = await pipeline(
+  "automatic-speech-recognition",
+  asrModel.id,
+  { revision: asrModel.revision },
+);
+```
+
+Check the pinned models at any time from your project directory:
 
 ```sh
+npx hug-models audit
+npx hug-models info asr
 npx hug-models outdated
 ```
 
-You can pass a different manifest path when needed:
+The `revision` is the exact model commit used by the application. `track`
+records the branch or tag to monitor and defaults to `main` when omitted.
 
-```sh
-npx hug-models outdated config/models.json
-```
+## Command reference
 
-The command resolves each model's `track` on the Hugging Face Hub and compares
-its commit with the pinned `revision`. Like `npm outdated`, it prints nothing
-and exits with status `0` when every pin is current. Otherwise it prints a table
-with abbreviated current and latest commits, tracked branch or tag, status, and
-the age of the latest commit on that branch or tag, then exits with status `1`.
-
-In an interactive terminal, model values use the same semantic palette as
-`info`. Ages under 30 days are green, ages from 30 through 89 days are amber,
-and ages of 90 days or more are red. Set `NO_COLOR` to disable color or
-`FORCE_COLOR=1` to enable it when output is not connected to a terminal.
-
-Use `--no-color` to explicitly disable color. For scripts, `--json` returns full
-commit hashes, the exact latest commit timestamp, and its numeric age in whole
-days. JSON output never includes terminal color codes:
-
-```sh
-npx hug-models outdated --json
-```
-
-```json
-[
-  {
-    "model": "onnx-community/moonshine-tiny-ONNX",
-    "current": "2e9aab599b84ee5aa2b305757e92c656d9ae638f",
-    "track": "main",
-    "latest": "a6da1241cd305dcd64eab1edbd615f2bb9aabb95",
-    "status": "outdated",
-    "latestAt": "2025-01-17T00:00:00.000Z",
-    "ageDays": 562
-  }
-]
-```
-
-Set `HF_TOKEN` when checking a private or gated model that your account can
-access.
-
-## Audit pinned models
+### Audit pinned models
 
 Run `audit` to check every pinned revision against the Hugging Face Hub's
 repository security scan:
@@ -115,10 +92,11 @@ severity, full revision, and a direct Hub link:
 # hug-models audit report
 
 owner/model
-Severity: unsafe
 Revision: 753c3cb70db0705e814b400330028ad5335246d3
+Details: https://huggingface.co/owner/model/tree/753c3cb70db0705e814b400330028ad5335246d3
+
 File: pytorch_model.bin
-https://huggingface.co/owner/model/blob/753c3cb70db0705e814b400330028ad5335246d3/pytorch_model.bin
+Severity: unsafe
 
 1 security finding (1 unsafe)
 ```
@@ -171,7 +149,7 @@ can require manual investigation. See Hugging Face's documentation on
 Set `HF_TOKEN` when auditing a private or gated model that your account can
 access.
 
-## Inspect a model
+### Inspect a model
 
 Use `info` to inspect one model before updating its pin. A manifest model can be
 selected by name:
@@ -211,37 +189,61 @@ and numeric age:
 npx hug-models info asr --json
 ```
 
-## Load the configuration
+### Check for outdated pins
 
-```js
-import { createModelConfig } from "hug-models";
-import manifest from "./hug-models.json" with { type: "json" };
+Run the `outdated` command from the directory containing `hug-models.json`:
 
-const models = createModelConfig(manifest);
-const asrModel = models.get("asr");
-
-console.log(asrModel.id);
-console.log(asrModel.revision);
+```sh
+npx hug-models outdated
 ```
 
-For a manifest containing exactly one model, its name may be omitted and the
-model can be retrieved without an argument:
+You can pass a different manifest path when needed:
 
-```js
-const model = createModelConfig({
-  models: [
-    {
-      id: "Xenova/all-MiniLM-L6-v2",
-      revision: "abc123",
-    },
-  ],
-}).get();
+```sh
+npx hug-models outdated config/models.json
 ```
 
-Calling `get()` without a name on a multi-model manifest is an error. Named
-models must have unique names.
+The command resolves each model's `track` on the Hugging Face Hub and compares
+its commit with the pinned `revision`. Like `npm outdated`, it prints nothing
+and exits with status `0` when every pin is current. Otherwise it prints a table
+with abbreviated current and latest commits, tracked branch or tag, status, and
+the age of the latest commit on that branch or tag, then exits with status `1`.
 
-## Manifest fields
+In an interactive terminal, model values use the same semantic palette as
+`info`. Ages under 30 days are green, ages from 30 through 89 days are amber,
+and ages of 90 days or more are red. Set `NO_COLOR` to disable color or
+`FORCE_COLOR=1` to enable it when output is not connected to a terminal.
+
+Use `--no-color` to explicitly disable color. For scripts, `--json` returns full
+commit hashes, the exact latest commit timestamp, and its numeric age in whole
+days. JSON output never includes terminal color codes:
+
+```sh
+npx hug-models outdated --json
+```
+
+```json
+[
+  {
+    "model": "onnx-community/moonshine-tiny-ONNX",
+    "current": "2e9aab599b84ee5aa2b305757e92c656d9ae638f",
+    "track": "main",
+    "latest": "a6da1241cd305dcd64eab1edbd615f2bb9aabb95",
+    "status": "outdated",
+    "latestAt": "2025-01-17T00:00:00.000Z",
+    "ageDays": 562
+  }
+]
+```
+
+Set `HF_TOKEN` when checking a private or gated model that your account can
+access.
+
+## Manifest reference
+
+The bundled JSON Schema provides editor completion and validates the manifest
+shape. Depending on your editor, you can reference either the installed file
+or the package export at `hug-models/schema.json`.
 
 | Field               | Required | Description                                            |
 | ------------------- | -------- | ------------------------------------------------------ |
@@ -265,7 +267,24 @@ try {
 }
 ```
 
-## API
+## JavaScript API
+
+For a manifest containing exactly one model, its name may be omitted and the
+model can be retrieved without an argument:
+
+```js
+const model = createModelConfig({
+  models: [
+    {
+      id: "Xenova/all-MiniLM-L6-v2",
+      revision: "abc123",
+    },
+  ],
+}).get();
+```
+
+Calling `get()` without a name on a multi-model manifest is an error. Named
+models must have unique names.
 
 ### `createModelConfig(manifest)`
 

@@ -124,18 +124,22 @@ test('formats findings and incomplete scans as a detailed report', () => {
 
   assert.match(output, /^# hug-models audit report$/m);
   assert.match(output, /^org\/model$/m);
-  assert.match(output, /^Severity: unsafe$/m);
   assert.match(output, /^Revision: a{40}$/m);
-  assert.match(output, /^File: unsafe\.bin$/m);
   assert.match(
     output,
-    new RegExp(`^https://huggingface\\.co/org/model/blob/${pinnedRevision}/unsafe\\.bin$`, 'm'),
+    new RegExp(`^Details: https://huggingface\\.co/org/model/tree/${pinnedRevision}$`, 'm'),
   );
+  assert.match(output, /^Severity: unsafe$/m);
+  assert.match(output, /^File: unsafe\.bin$/m);
   assert.match(output, /^Severity: caution$/m);
   assert.match(output, /^File: review\.pt$/m);
   assert.match(output, /^org\/pending$/m);
   assert.match(output, /^Status: unscanned$/m);
   assert.match(output, /The Hub did not report its security scans as complete\./);
+  assert.match(
+    output,
+    new RegExp(`^Details: https://huggingface\\.co/org/pending/tree/${secondRevision}$`, 'm'),
+  );
   assert.match(output, /2 security findings \(1 caution, 1 unsafe\), 1 unscanned model$/);
 });
 
