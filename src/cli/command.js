@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { Command, CommanderError } from 'commander';
+import { addModel } from './add.js';
 import {
   auditModels,
   formatAuditResults,
@@ -91,6 +92,17 @@ function createProgram({ write, setExitCode, dependencies }) {
     });
 
   program
+    .command('add')
+    .description('Add a pinned model to the manifest.')
+    .argument('<model>', 'Hugging Face model repository ID')
+    .requiredOption('--name <name>', 'application-defined model name')
+    .option('--track <branch-or-tag>', 'track a branch or tag', 'main')
+    .action(async (model, options) => {
+      await runAdd({ model, ...options }, dependencies);
+      setExitCode(0);
+    });
+
+  program
     .command('audit')
     .description('Check pinned model revisions for Hub security findings.')
     .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
@@ -132,6 +144,37 @@ function createProgram({ write, setExitCode, dependencies }) {
     });
 
   return program;
+}
+
+async function runAdd(commandArgs, {
+  cwd,
+  readFileImpl,
+  writeFileImpl,
+  fetchImpl,
+  token,
+  write,
+}) {
+  const manifestPath = resolve(cwd, 'hug-models.json');
+  const manifest = await readModelManifest(manifestPath, readFileImpl);
+  const result = await addModel(
+    manifest,
+    {
+      name: commandArgs.name,
+      id: commandArgs.model,
+      track: commandArgs.track,
+    },
+    { fetchImpl, token },
+  );
+
+  await writeFileImpl(
+    manifestPath,
+    `${JSON.stringify(result.manifest, null, 2)}\n`,
+    { encoding: 'utf8' },
+  );
+  write(
+    `Added ${result.model.name}: ${result.model.id}@${result.model.revision} `
+    + `(${result.model.track})`,
+  );
 }
 
 async function runInit({ cwd, writeFileImpl, write }) {
@@ -251,6 +294,10 @@ function findManifestModel(config, name) {
 }
 
 async function readModelConfig(manifestPath, readFileImpl) {
+  return createModelConfig(await readModelManifest(manifestPath, readFileImpl));
+}
+
+async function readModelManifest(manifestPath, readFileImpl) {
   let source;
   try {
     source = await readFileImpl(manifestPath, 'utf8');
@@ -268,5 +315,5 @@ async function readModelConfig(manifestPath, readFileImpl) {
     throw new Error(`Could not parse ${manifestPath}: ${error.message}`);
   }
 
-  return createModelConfig(manifest);
+  return manifest;
 }

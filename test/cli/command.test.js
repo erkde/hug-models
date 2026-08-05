@@ -16,6 +16,7 @@ test('CLI shows generated help when called without a command', async () => {
 
   assert.equal(code, 0);
   assert.match(output, /^Usage: hug-models \[options\] \[command\]/m);
+  assert.match(output, /^\s+add \[options\] <model>/m);
   assert.match(output, /^\s+init\s+Create an empty model manifest\./m);
   assert.match(output, /^\s+audit \[options\] \[manifest\]/m);
   assert.match(output, /^\s+outdated \[options\] \[manifest\]/m);
@@ -85,6 +86,10 @@ test('CLI shows command-specific help without running the command', async () => 
 });
 
 test('CLI reports unknown options and excess arguments', async () => {
+  await assert.rejects(
+    runCli(['add', 'org/model']),
+    /required option '--name <name>' not specified/,
+  );
   await assert.rejects(
     runCli(['outdated', '--unknown']),
     /unknown option '--unknown'/,

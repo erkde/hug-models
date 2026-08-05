@@ -8,6 +8,7 @@ security findings.
 
 | Command                   | What it does                                          |
 | ------------------------- | ----------------------------------------------------- |
+| `npx hug-models add`      | Resolve and add a pinned model dependency             |
 | `npx hug-models audit`    | Check pinned revisions for Hub security findings      |
 | `npx hug-models info`     | Inspect a model and retrieve its latest full revision |
 | `npx hug-models init`     | Create an empty model manifest                        |
@@ -29,8 +30,14 @@ Initialize a `hug-models.json` file in your application:
 npx hug-models init
 ```
 
-This creates an empty manifest with the bundled JSON Schema configured. Add a
-model dependency:
+Add a named model dependency. The command resolves `main` to its current commit
+and pins that immutable revision:
+
+```sh
+npx hug-models add onnx-community/moonshine-tiny-ONNX --name asr
+```
+
+The resulting manifest includes the bundled JSON Schema:
 
 ```json
 {
@@ -75,6 +82,30 @@ The `revision` is the exact model commit used by the application. `track`
 records the branch or tag to monitor and defaults to `main` when omitted.
 
 ## Command reference
+
+### Add a model
+
+Resolve a model's tracked branch or tag to its current Hub commit and add the
+immutable revision to `hug-models.json`:
+
+```sh
+npx hug-models add onnx-community/moonshine-tiny-ONNX --name asr
+```
+
+The argument is the Hugging Face model repository ID. `--name` supplies the
+unique application-defined name used by `get(name)`. Model IDs may be repeated
+under different names, allowing an application to pin more than one revision
+of the same repository.
+
+The tracked branch defaults to `main`. Select a different branch or tag with
+`--track`:
+
+```sh
+npx hug-models add onnx-community/moonshine-tiny-ONNX --name asr-next --track next
+```
+
+Set `HF_TOKEN` when adding a private or gated model that your account can
+access.
 
 ### Audit pinned models
 
