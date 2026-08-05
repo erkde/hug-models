@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { Command, CommanderError } from 'commander';
@@ -36,6 +36,7 @@ export async function runCli(
   {
     cwd = process.cwd(),
     readFileImpl = readFile,
+    writeFileImpl = writeFile,
     fetchImpl = globalThis.fetch,
     token = process.env.HF_TOKEN,
     write = console.log,
@@ -44,7 +45,16 @@ export async function runCli(
   } = {},
 ) {
   let exitCode = 0;
-  const dependencies = { cwd, readFileImpl, fetchImpl, token, write, color, now };
+  const dependencies = {
+    cwd,
+    readFileImpl,
+    writeFileImpl,
+    fetchImpl,
+    token,
+    write,
+    color,
+    now,
+  };
   const program = createProgram({
     write,
     setExitCode: (value) => {
@@ -91,16 +101,6 @@ function createProgram({ write, setExitCode, dependencies }) {
     });
 
   program
-    .command('outdated')
-    .description('Check pinned revisions against their tracked branches or tags.')
-    .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
-    .option('--json', 'print stable JSON with full revisions and exact timestamps')
-    .option('--no-color', 'disable colors even when output is an interactive terminal')
-    .action(async (manifest, options) => {
-      setExitCode(await runOutdated({ manifest, ...options }, dependencies));
-    });
-
-  program
     .command('info')
     .description('Show update details and Hub metadata for one model.')
     .argument('[model]', 'model name or Hugging Face model ID')
@@ -113,7 +113,48 @@ function createProgram({ write, setExitCode, dependencies }) {
       setExitCode(0);
     });
 
+  program
+    .command('init')
+    .description('Create an empty model manifest.')
+    .action(async () => {
+      await runInit(dependencies);
+      setExitCode(0);
+    });
+
+  program
+    .command('outdated')
+    .description('Check pinned revisions against their tracked branches or tags.')
+    .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
+    .option('--json', 'print stable JSON with full revisions and exact timestamps')
+    .option('--no-color', 'disable colors even when output is an interactive terminal')
+    .action(async (manifest, options) => {
+      setExitCode(await runOutdated({ manifest, ...options }, dependencies));
+    });
+
   return program;
+}
+
+async function runInit({ cwd, writeFileImpl, write }) {
+  const manifest = 'hug-models.json';
+  const manifestPath = resolve(cwd, manifest);
+  const initialManifest = `${JSON.stringify({
+    $schema: './node_modules/hug-models/schema.json',
+    models: [],
+  }, null, 2)}\n`;
+
+  try {
+    await writeFileImpl(manifestPath, initialManifest, {
+      encoding: 'utf8',
+      flag: 'wx',
+    });
+  } catch (error) {
+    if (error?.code === 'EEXIST') {
+      throw new Error(`Model manifest already exists: ${manifestPath}`, { cause: error });
+    }
+    throw error;
+  }
+
+  write(`Created ${manifest}`);
 }
 
 async function runAudit(commandArgs, {

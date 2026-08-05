@@ -10,6 +10,7 @@ security findings.
 | ------------------------- | ----------------------------------------------------- |
 | `npx hug-models audit`    | Check pinned revisions for Hub security findings      |
 | `npx hug-models info`     | Inspect a model and retrieve its latest full revision |
+| `npx hug-models init`     | Create an empty model manifest                        |
 | `npx hug-models outdated` | Find pins with newer tracked revisions                |
 
 This is an independent open-source project and is not affiliated with Hugging Face.
@@ -22,7 +23,14 @@ Install the package:
 npm install hug-models
 ```
 
-Create a `hug-models.json` file in your application:
+Initialize a `hug-models.json` file in your application:
+
+```sh
+npx hug-models init
+```
+
+This creates an empty manifest with the bundled JSON Schema configured. Add a
+model dependency:
 
 ```json
 {
@@ -189,6 +197,14 @@ and numeric age:
 
 ```sh
 npx hug-models info asr --json
+```
+
+### Initialize a manifest
+
+Create an empty `hug-models.json` without overwriting an existing file:
+
+```sh
+npx hug-models init
 ```
 
 ### Check for outdated pins
