@@ -6,6 +6,8 @@ Store model repository IDs and immutable revisions in a small JSON manifest,
 load them from application code, and use the CLI to inspect updates and Hub
 security findings.
 
+If you've used npm, the workflow should feel familiar.
+
 | Command                   | What it does                                          |
 | ------------------------- | ----------------------------------------------------- |
 | `npx hug-models add`      | Resolve and add a pinned model dependency             |
