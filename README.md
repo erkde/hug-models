@@ -14,7 +14,6 @@ If you've used npm, the workflow should feel familiar.
 | `npx hug-models audit`    | Check pinned revisions for Hub security findings      |
 | `npx hug-models info`     | Inspect a model and retrieve its latest full revision |
 | `npx hug-models init`     | Create an empty model manifest                        |
-| `npx hug-models outdated` | Find pins with newer tracked revisions                |
 
 This is an independent open-source project and is not affiliated with Hugging Face.
 
@@ -77,7 +76,6 @@ Check the pinned models at any time from your project directory:
 ```sh
 npx hug-models audit
 npx hug-models info asr
-npx hug-models outdated
 ```
 
 The `revision` is the exact model commit used by the application. `track`
@@ -219,8 +217,8 @@ npx hug-models info onnx-community/moonshine-tiny-ONNX --track release
 
 The human-readable output includes the full current and latest revisions, track,
 update status, exact and relative update time, task, library, license, tags, and
-access level when supplied by the Hub. Unlike `outdated`, `info` is
-informational and exits with status `0` even when the pin is outdated.
+access level when supplied by the Hub. The command is informational and exits
+with status `0` even when the pin is outdated.
 Interactive output uses color to separate selected values from labels; age is
 colored only when a newer revision is available. The same `NO_COLOR`,
 `FORCE_COLOR`, and `--no-color` controls apply.
@@ -239,56 +237,6 @@ Create an empty `hug-models.json` without overwriting an existing file:
 ```sh
 npx hug-models init
 ```
-
-### Check for outdated pins
-
-Run the `outdated` command from the directory containing `hug-models.json`:
-
-```sh
-npx hug-models outdated
-```
-
-You can pass a different manifest path when needed:
-
-```sh
-npx hug-models outdated config/models.json
-```
-
-The command resolves each model's `track` on the Hugging Face Hub and compares
-its commit with the pinned `revision`. Like `npm outdated`, it prints nothing
-and exits with status `0` when every pin is current. Otherwise it prints a table
-with abbreviated current and latest commits, tracked branch or tag, status, and
-the age of the latest commit on that branch or tag, then exits with status `1`.
-
-In an interactive terminal, model values use the same semantic palette as
-`info`. Ages under 30 days are green, ages from 30 through 89 days are amber,
-and ages of 90 days or more are red. Set `NO_COLOR` to disable color or
-`FORCE_COLOR=1` to enable it when output is not connected to a terminal.
-
-Use `--no-color` to explicitly disable color. For scripts, `--json` returns full
-commit hashes, the exact latest commit timestamp, and its numeric age in whole
-days. JSON output never includes terminal color codes:
-
-```sh
-npx hug-models outdated --json
-```
-
-```json
-[
-  {
-    "model": "onnx-community/moonshine-tiny-ONNX",
-    "current": "2e9aab599b84ee5aa2b305757e92c656d9ae638f",
-    "track": "main",
-    "latest": "a6da1241cd305dcd64eab1edbd615f2bb9aabb95",
-    "status": "outdated",
-    "latestAt": "2025-01-17T00:00:00.000Z",
-    "ageDays": 562
-  }
-]
-```
-
-Set `HF_TOKEN` when checking a private or gated model that your account can
-access.
 
 ## Manifest reference
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import test from 'node:test';
-import { runCli } from '../../src/cli/command.js';
+import { runCli, shouldUseColor } from '../../src/cli/command.js';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../../package.json');
@@ -19,8 +19,8 @@ test('CLI shows generated help when called without a command', async () => {
   assert.match(output, /^\s+add \[options\] <model>/m);
   assert.match(output, /^\s+init\s+Create an empty model manifest\./m);
   assert.match(output, /^\s+audit \[options\] \[manifest\]/m);
-  assert.match(output, /^\s+outdated \[options\] \[manifest\]/m);
   assert.match(output, /^\s+info \[options\] \[model\] \[manifest\]/m);
+  assert.doesNotMatch(output, /^\s+outdated\b/m);
 });
 
 test('CLI initializes the default manifest without overwriting files', async () => {
@@ -91,13 +91,27 @@ test('CLI reports unknown options and excess arguments', async () => {
     /required option '--name <name>' not specified/,
   );
   await assert.rejects(
-    runCli(['outdated', '--unknown']),
+    runCli(['audit', '--unknown']),
     /unknown option '--unknown'/,
   );
   await assert.rejects(
-    runCli(['outdated', 'one.json', 'two.json']),
+    runCli(['audit', 'one.json', 'two.json']),
     /too many arguments/,
   );
+});
+
+test('CLI rejects the removed outdated command', async () => {
+  await assert.rejects(
+    runCli(['outdated']),
+    /unknown command 'outdated'/,
+  );
+});
+
+test('CLI respects standard color environment controls', () => {
+  assert.equal(shouldUseColor({ env: {}, isTTY: true }), true);
+  assert.equal(shouldUseColor({ env: { NO_COLOR: '' }, isTTY: true }), false);
+  assert.equal(shouldUseColor({ env: { FORCE_COLOR: '1' }, isTTY: false }), true);
+  assert.equal(shouldUseColor({ env: { FORCE_COLOR: '0' }, isTTY: true }), false);
 });
 
 test('CLI exposes the package version', async () => {

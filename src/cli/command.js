@@ -10,11 +10,6 @@ import {
   hasAuditProblems,
 } from './audit.js';
 import { createModelConfig } from '../index.js';
-import {
-  checkOutdatedModels,
-  formatOutdatedModels,
-  formatOutdatedModelsJson,
-} from './outdated.js';
 import { formatModelInfo, formatModelInfoJson, getModelInfo } from './info.js';
 
 const require = createRequire(import.meta.url);
@@ -133,16 +128,6 @@ function createProgram({ write, setExitCode, dependencies }) {
       setExitCode(0);
     });
 
-  program
-    .command('outdated')
-    .description('Check pinned revisions against their tracked branches or tags.')
-    .argument('[manifest]', 'path to the model manifest', 'hug-models.json')
-    .option('--json', 'print stable JSON with full revisions and exact timestamps')
-    .option('--no-color', 'disable colors even when output is an interactive terminal')
-    .action(async (manifest, options) => {
-      setExitCode(await runOutdated({ manifest, ...options }, dependencies));
-    });
-
   return program;
 }
 
@@ -215,30 +200,6 @@ async function runAudit(commandArgs, {
     ? formatAuditResultsJson(results)
     : formatAuditResults(results, { color: color && commandArgs.color !== false }));
   return hasAuditProblems(results) ? 1 : 0;
-}
-
-async function runOutdated(commandArgs, {
-  cwd,
-  readFileImpl,
-  fetchImpl,
-  token,
-  write,
-  color,
-  now,
-}) {
-  const manifestPath = resolve(cwd, commandArgs.manifest);
-  const config = await readModelConfig(manifestPath, readFileImpl);
-  const results = await checkOutdatedModels(config.models, { fetchImpl, token });
-  if (commandArgs.json) {
-    write(formatOutdatedModelsJson(results, { now }));
-  } else {
-    const output = formatOutdatedModels(results, {
-      color: color && commandArgs.color !== false,
-      now,
-    });
-    if (output) write(output);
-  }
-  return results.some((model) => model.outdated) ? 1 : 0;
 }
 
 async function runInfo(commandArgs, {

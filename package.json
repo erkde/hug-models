@@ -1,7 +1,7 @@
 {
   "name": "hug-models",
   "version": "0.4.0",
-  "description": "Model dependency manifests, outdated checks, and security audits for Transformers.js applications.",
+  "description": "Model dependency manifests, update inspection, and security audits for Transformers.js applications.",
   "type": "module",
   "bin": {
     "hug-models": "src/cli/index.js"

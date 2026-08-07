@@ -74,15 +74,6 @@ export function styleText(value, ...styles) {
   return `${styles.map((style) => ansi[style]).join('')}${value}${ansi.reset}`;
 }
 
-/**
- * Abbreviate a full Git revision for terminal display.
- *
- * @param {string} revision
- */
-export function shortRevision(revision) {
-  return revision.slice(0, 7);
-}
-
 function ageMilliseconds(lastModified, now) {
   const timestamp = Date.parse(lastModified ?? '');
   if (Number.isNaN(timestamp)) return null;
