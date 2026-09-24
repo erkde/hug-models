@@ -1,9 +1,8 @@
-## Update
+## ** Update
 
 This package is now deprecated on NPM, please look for alternatives. 
 
-The way models seem to evolve on Hugging Face is doesn't seem to quite follow the
-lifecycle of a NPM package which this package's workflow mirrors.
+The way models seem to evolve on Hugging Face doesn't seem to follow the lifecycle of a NPM package which this workflow mirrors.
 
 # hug-models
 
