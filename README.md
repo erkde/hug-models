@@ -1,3 +1,10 @@
+## Update
+
+This package is now deprecated on NPM, please look for alternatives. 
+
+The way models seem to evolve on Hugging Face is doesn't seem to quite follow the
+lifecycle of a NPM package which this package's workflow mirrors.
+
 # hug-models
 
 Manage pinned Hugging Face model dependencies in Transformers.js applications.
